@@ -21,6 +21,10 @@ from main import EmothriveAI, EmothriveBackendInterface, AudioFormat, AudioInput
 from prompt import ConversationStyle
 from pdf_processor import PDFVectorStore
 
+# Load environment variables
+from dotenv import load_dotenv
+load_dotenv()  # This loads the .env file
+
 # Page configuration
 st.set_page_config(
     page_title="Emothrive AI Testing Dashboard",
@@ -76,15 +80,21 @@ if 'ai_engine' not in st.session_state:
     st.session_state.initialized = False
 
 
-def initialize_ai_engine(openai_key: str, elevenlabs_key: str):
-    """Initialize the AI engine with API keys"""
+def initialize_ai_engine():
+    """Initialize the AI engine with API keys from .env"""
     try:
+        openai_key = os.getenv("OPENAI_API_KEY")
+        elevenlabs_key = os.getenv("ELEVENLABS_API_KEY")
+
+        if not openai_key or not elevenlabs_key:
+            raise ValueError("API keys not found in environment variables")
+
         with st.spinner("Initializing AI Engine..."):
             # Create AI engine
             ai_engine = EmothriveAI(
                 openai_api_key=openai_key,
                 elevenlabs_api_key=elevenlabs_key,
-                pdf_folder="./pdf/",
+                pdf_folder=os.getenv("PDF_FOLDER_PATH", "./pdf/"),  # Load from .env
                 default_therapy_type=TherapyType.GENERAL,
                 enable_crisis_detection=True
             )
@@ -276,7 +286,7 @@ def main():
         
         if st.button("Initialize AI Engine", type="primary"):
             if openai_key and elevenlabs_key:
-                initialize_ai_engine(openai_key, elevenlabs_key)
+                initialize_ai_engine()
             else:
                 st.error("Please provide both API keys")
         
@@ -321,7 +331,7 @@ def main():
         ["💬 Chat Interface", "🧪 Automated Tests", "🎤 Voice Testing", 
          "📊 Analytics", "📋 Session History"]
     )
-    
+
     # Tab 1: Chat Interface
     with tab1:
         st.header("Interactive Chat Testing")
@@ -373,208 +383,6 @@ def main():
                 else:
                     st.markdown(f"<div class='ai-message'><b>AI:</b> {msg['content']}</div>", 
                                unsafe_allow_html=True)
-    
-    # Tab 2: Automated Tests
-    with tab2:
-        st.header("Automated Test Suite")
-        st.write("Run comprehensive tests to validate AI responses across different scenarios")
-        
-        if st.button("🚀 Run All Tests", type="primary"):
-            results = run_automated_tests()
-            st.session_state.test_results = results
-            
-            # Display results
-            df = pd.DataFrame(results)
-            st.dataframe(df, use_container_width=True)
-            
-            # Summary metrics
-            col1, col2, col3 = st.columns(3)
-            success_count = sum(1 for r in results if r['Success'] == "✅")
-            with col1:
-                st.metric("Total Tests", len(results))
-            with col2:
-                st.metric("Passed", success_count)
-            with col3:
-                st.metric("Success Rate", f"{success_count/len(results)*100:.0f}%")
-    
-    # Tab 3: Voice Testing
-    with tab3:
-        st.header("Voice Input/Output Testing")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.subheader("🎤 Voice Input (STT)")
-            duration = st.slider("Recording duration (seconds)", 1, 10, 5)
-            
-            if st.button("Start Recording"):
-                try:
-                    audio_data = record_audio(duration)
-                    st.success("Recording completed!")
-                    
-                    # Test transcription
-                    audio_input = AudioInput(
-                        audio_data=audio_data,
-                        format=AudioFormat.WAV,
-                        language="en"
-                    )
-                    
-                    # Process audio
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-                    response = loop.run_until_complete(
-                        st.session_state.ai_engine.handle_input(audio_input)
-                    )
-                    
-                    st.write("**Transcribed Text:**", response.text if hasattr(response, 'text') else "Error")
-                    
-                except Exception as e:
-                    st.error(f"Recording error: {str(e)}")
-        
-        with col2:
-            st.subheader("🔊 Voice Output (TTS)")
-            test_text = st.text_area("Text to speak:", 
-                                    value="Hello! I'm here to support you. How are you feeling today?")
-            
-            voice_options = {
-                "Rachel (Default)": "21m00Tcm4TlvDq8ikWAM",
-                "Domi": "AZnzlk1XvdvUeBnXmlld",
-                "Bella": "EXAVITQu4vr4xnSDxMaL",
-                "Antoni": "ErXwobaYiN019PkySvjV",
-                "Elli": "MF3mGyEYCl7XYWbV9V6O"
-            }
-            
-            selected_voice = st.selectbox("Select Voice:", list(voice_options.keys()))
-            
-            if st.button("Generate Speech"):
-                with st.spinner("Generating speech..."):
-                    try:
-                        # Update voice ID
-                        st.session_state.ai_engine.voice_id = voice_options[selected_voice]
-                        
-                        # Generate speech
-                        loop = asyncio.new_event_loop()
-                        asyncio.set_event_loop(loop)
-                        audio_data = loop.run_until_complete(
-                            st.session_state.ai_engine.generate_speech(test_text)
-                        )
-                        
-                        st.audio(audio_data, format='audio/mp3')
-                        st.success("Speech generated successfully!")
-                        
-                    except Exception as e:
-                        st.error(f"TTS Error: {str(e)}")
-    
-    # Tab 4: Analytics
-    with tab4:
-        st.header("Performance Analytics")
-        
-        if st.session_state.test_results:
-            # Processing time chart
-            df = pd.DataFrame(st.session_state.test_results)
-            
-            fig1 = px.bar(df, x='Test', y='Processing Time', 
-                         title='Processing Time by Test',
-                         color='Success')
-            st.plotly_chart(fig1, use_container_width=True)
-        
-        # Session statistics
-        if st.session_state.ai_engine:
-            session_stats = st.session_state.ai_engine.get_session_summary()
-            
-            col1, col2, col3, col4 = st.columns(4)
-            with col1:
-                st.metric("Session Duration", f"{session_stats['duration']:.0f}s")
-            with col2:
-                st.metric("Messages", session_stats['messages_count'])
-            with col3:
-                st.metric("Therapy Types Used", len(session_stats['therapy_types_used']))
-            with col4:
-                st.metric("PDF Sources", session_stats['knowledge_base_stats']['total_pdfs'])
-        
-        # Therapy type distribution
-        if st.session_state.conversation_history:
-            therapy_counts = {}
-            for msg in st.session_state.conversation_history:
-                if msg['role'] == 'assistant' and 'metadata' in msg:
-                    therapy_type = msg['metadata'].get('therapy_type', 'Unknown')
-                    therapy_counts[therapy_type] = therapy_counts.get(therapy_type, 0) + 1
-            
-            if therapy_counts:
-                fig2 = go.Figure(data=[go.Pie(labels=list(therapy_counts.keys()), 
-                                             values=list(therapy_counts.values()))])
-                fig2.update_layout(title="Therapy Type Distribution")
-                st.plotly_chart(fig2, use_container_width=True)
-    
-    # Tab 5: Session History
-    with tab5:
-        st.header("Session History & Export")
-        
-        if st.session_state.ai_engine:
-            # Export options
-            col1, col2, col3 = st.columns(3)
-            
-            with col1:
-                if st.button("📥 Export Conversation (JSON)"):
-                    export_data = st.session_state.ai_engine.export_conversation("json")
-                    st.download_button(
-                        label="Download JSON",
-                        data=export_data,
-                        file_name=f"emothrive_session_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-                        mime="application/json"
-                    )
-            
-            with col2:
-                if st.button("🔄 Reset Conversation"):
-                    st.session_state.ai_engine.reset_conversation()
-                    st.session_state.conversation_history = []
-                    st.success("Conversation reset!")
-            
-            with col3:
-                if st.button("📊 Generate Report"):
-                    # Create a comprehensive report
-                    report = f"""
-# Emothrive AI Session Report
-Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-
-## Session Summary
-- Session ID: {st.session_state.ai_engine.session_data['session_id']}
-- Duration: {(datetime.now() - st.session_state.ai_engine.session_data['start_time']).total_seconds():.0f} seconds
-- Total Messages: {st.session_state.ai_engine.session_data['messages_count']}
-
-## Test Results
-"""
-                    if st.session_state.test_results:
-                        for result in st.session_state.test_results:
-                            report += f"- {result['Test']}: {result['Success']} (Time: {result['Processing Time']})\n"
-                    
-                    st.download_button(
-                        label="Download Report",
-                        data=report,
-                        file_name=f"emothrive_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
-                        mime="text/markdown"
-                    )
-        
-        # Display raw conversation data
-        with st.expander("View Raw Conversation Data"):
-            if st.session_state.conversation_history:
-                st.json(st.session_state.conversation_history)
-
-
-# Footer
-def footer():
-    st.markdown("---")
-    st.markdown(
-        """
-        <div style='text-align: center; color: #666;'>
-            <p>Emothrive AI Testing Dashboard v1.0 | Built with Streamlit</p>
-            <p>Powered by OpenAI GPT-4 & ElevenLabs Multilingual v2</p>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
 
 if __name__ == "__main__":
     main()
-    footer()

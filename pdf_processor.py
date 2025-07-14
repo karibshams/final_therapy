@@ -44,6 +44,7 @@ class PDFVectorStore:
             openai_api_key: OpenAI API key for embeddings
         """
         self.folder_path = folder_path
+        self.openai_api_key = openai_api_key or os.getenv("OPENAI_API_KEY")
         self.documents: List[PDFDocument] = []
         self.vector_store: Optional[FAISS] = None
         self.embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
