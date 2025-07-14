@@ -16,7 +16,7 @@ from openai import OpenAI
 
 # ElevenLabs
 from elevenlabs import VoiceSettings
-from elevenlabs.client import ElevenLabs
+from elevenlabs import ElevenLabs
 
 # Audio processing
 import soundfile as sf
@@ -28,11 +28,20 @@ import io
 from pdf_processor import PDFVectorStore
 from prompt import PromptManager, TherapyType, ConversationStyle
 
+# Load environment variables
+from dotenv import load_dotenv
+load_dotenv()  # This loads the .env file
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
+# Fetch keys and config from the .env file
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
+PDF_FOLDER_PATH = os.getenv("PDF_FOLDER_PATH", "./pdf/")  # Default if not specified
+VECTOR_STORE_PATH = os.getenv("VECTOR_STORE_PATH", "./vector_store/")
+# Model Configuration
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 class AudioFormat(Enum):
     """Audio format options"""
     MP3 = "mp3"
