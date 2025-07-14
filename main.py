@@ -103,7 +103,7 @@ class EmothriveAI:
         """
         # API clients
         self.openai_client = OpenAI(api_key=openai_api_key)
-        self.elevenlabs_client = ElevenLabs(api_key=elevenlabs_api_key)
+        #self.elevenlabs_client = ElevenLabs(api_key=elevenlabs_api_key)
         
         # Initialize components
         self.pdf_store = PDFVectorStore(folder_path=pdf_folder, openai_api_key=openai_api_key)
