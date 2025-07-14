@@ -31,6 +31,7 @@ from prompt import PromptManager, TherapyType, ConversationStyle
 # Load environment variables
 from dotenv import load_dotenv
 load_dotenv()  # This loads the .env file
+
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -40,8 +41,12 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 PDF_FOLDER_PATH = os.getenv("PDF_FOLDER_PATH", "./pdf/")  # Default if not specified
 VECTOR_STORE_PATH = os.getenv("VECTOR_STORE_PATH", "./vector_store/")
+
 # Model Configuration
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")
+
+# Audio Format Enum
 class AudioFormat(Enum):
     """Audio format options"""
     MP3 = "mp3"
@@ -79,10 +84,10 @@ class EmothriveAI:
     def __init__(self,
                  openai_api_key: str,
                  elevenlabs_api_key: str,
-                 pdf_folder: str = "./pdf/",
+                 pdf_folder: str = PDF_FOLDER_PATH,
                  default_therapy_type: TherapyType = TherapyType.GENERAL,
-                 voice_id: str = "21m00Tcm4TlvDq8ikWAM",  # Rachel voice
-                 model: str = "gpt-4o-mini",
+                 voice_id: str = ELEVENLABS_VOICE_ID,  # Rachel voice
+                 model: str = OPENAI_MODEL,
                  enable_crisis_detection: bool = True):
         """
         Initialize EmothriveAI with all necessary components
