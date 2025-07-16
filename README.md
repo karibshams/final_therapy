@@ -109,6 +109,29 @@ If the AI detects potentially harmful statements (e.g. *"I want to hurt myself"*
 
 * Skip normal context generation
 * Respond with a pre-designed crisis message including helpline info
+## 📈 Dashboard Tabs Overview
+
+| Tab                | Description                  |
+| ------------------ | ---------------------------- |
+| 💬 Chat Interface  | Test real conversations      |
+| 🧪 Automated Tests | Run 5+ predefined test cases |
+| 🎤 Voice Testing   | Record and test with audio   |
+| 📊 Analytics       | See system stats & metrics   |
+| 📋 Session History | View past conversation logs  |
+
+## 📦 Export & Session Management
+
+* Export conversations in JSON
+* Reset sessions
+* Track PDF usage and therapy type trends
+
+## 📸 Screenshots
+
+> You can upload screenshots to this section to showcase your UI and interactions.
+
+---
+
+
 
 
 
