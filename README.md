@@ -130,6 +130,24 @@ If the AI detects potentially harmful statements (e.g. *"I want to hurt myself"*
 > You can upload screenshots to this section to showcase your UI and interactions.
 
 ---
+## 🤝 Contributions
+
+PRs are welcome. Make sure to:
+
+* Follow code style
+* Use environment variables for keys
+* Avoid committing `.env` or audio files
+
+## 📄 License
+
+This project is under the MIT License.
+
+---
+
+**Developed by [Karib Shams](https://github.com/karibshams)**
+With ❤️ for mental health, AI, and user-centric design.
+
+```
 
 
 
